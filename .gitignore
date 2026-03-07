@@ -1,0 +1,4 @@
+# PyCharm / IntelliJ
+.idea/
+*.iml
+.idea/  # на всякий случай два раза
