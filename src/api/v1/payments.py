@@ -1,54 +1,75 @@
-from fastapi import APIRouter, Depends, HTTPException
+# src/api/v1/payments.py
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
+from pydantic import BaseModel, Field
+from decimal import Decimal
+from typing import Literal
 
-from ...infrastructure.db.session import get_db
-from ...infrastructure.db.models.order import Order
-from ...infrastructure.db.models.payment import Payment, PaymentType, PaymentStatus
+from src.core.exceptions import NotFoundError, BusinessLogicError
+from src.infrastructure.db.models.order import Order
+from src.services.payment_service import PaymentService
+from src.dependencies import get_payment_service     # если создал файл
+# или напрямую: from src.services.payment_service import PaymentService
+#               from src.infrastructure.acquiring.fake_client import FakeAcquiringClient
+#               from src.infrastructure.db.session import get_db
+
 
 router = APIRouter(prefix="/payments", tags=["payments"])
 
 
-@router.post("/create-simple")
-async def create_simple_payment(
-    order_amount: float = 1000.0,
-    payment_amount: float = 600.0,
-    payment_type: str = "cash",
-    db: AsyncSession = Depends(get_db),
+
+class PaymentCreateRequest(BaseModel):
+    order_id: int = Field(..., gt=0, description="ID существующего заказа")
+    amount: Decimal = Field(..., gt=0, description="Сумма платежа")
+    type: Literal["cash", "acquiring"] = Field(..., description="Тип оплаты")
+
+
+@router.post(
+    "/",
+    summary="Создать платёж для существующего заказа",
+    status_code=status.HTTP_201_CREATED
+)
+async def create_payment(
+    request: PaymentCreateRequest,  # ← в body JSON
+    service: PaymentService = Depends(get_payment_service)
 ):
     try:
-        # Создаём заказ
-        order = Order(amount=Decimal(str(order_amount)))
-        db.add(order)
-        await db.flush()  # получаем order.id
-
-        # Создаём платёж
-        payment = Payment(
-            order_id=order.id,
-            amount=Decimal(str(payment_amount)),
-            type=PaymentType(payment_type),
+        payment_id = await service.create_payment(
+            order_id=request.order_id,
+            amount=request.amount,
+            payment_type=request.type
         )
+        return {"payment_id": payment_id}
+    except NotFoundError as e:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(e))
+    except BusinessLogicError as e:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, detail=str(e))
 
-        if payment_type == "cash":
-            payment.status = PaymentStatus.SUCCESS
-            order.paid_amount += payment.amount
-            if order.paid_amount >= order.amount:
-                order.status = "paid"
-            elif order.paid_amount > 0:
-                order.status = "partially_paid"
 
-        db.add(payment)
-        await db.commit()
-        await db.refresh(order)
-        await db.refresh(payment)
+@router.post("/{payment_id}/confirm")
+async def confirm_acquiring(
+    payment_id: int,
+    service: PaymentService = Depends(get_payment_service)
+):
+    try:
+        result = await service.confirm_acquiring_payment(payment_id)
+        return result
+    except NotFoundError as e:
+        raise HTTPException(404, str(e))
+    except BusinessLogicError as e:
+        raise HTTPException(400, str(e))
 
-        return {
-            "order_id": order.id,
-            "order_status": order.status,
-            "paid_amount": float(order.paid_amount),
-            "payment_id": payment.id,
-            "payment_status": payment.status,
-        }
 
-    except Exception as e:
-        await db.rollback()
-        raise HTTPException(status_code=400, detail=str(e))
+@router.post("/{payment_id}/refund")
+async def refund(
+    payment_id: int,
+    amount: Decimal,                # можно в body или query
+    service: PaymentService = Depends(get_payment_service)
+):
+    try:
+        result = await service.refund_payment(payment_id, amount)
+        return result
+    except NotFoundError as e:
+        raise HTTPException(404, str(e))
+    except BusinessLogicError as e:
+        raise HTTPException(400, str(e))

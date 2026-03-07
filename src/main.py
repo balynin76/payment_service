@@ -6,6 +6,7 @@ from fastapi.responses import JSONResponse
 # Добавляем эти импорты
 from src.infrastructure.db.session import engine, create_tables
 from src.api.v1.payments import router as payments_router
+from src.api.v1.orders import router as orders_router
 
 # ────────────────────────────────────────────────
 @asynccontextmanager
@@ -30,6 +31,7 @@ app = FastAPI(
 )
 
 app.include_router(payments_router, prefix="/api/v1", tags=["payments"])
+app.include_router(orders_router, prefix="/api/v1")
 
 # ────────────────────────────────────────────────
 # остальной код без изменений
@@ -41,12 +43,6 @@ async def root():
         "status": "ok"
     }
 
-@app.get("/health")
-async def health_check():
-    return JSONResponse(
-        content={"status": "healthy"},
-        status_code=200
-    )
 
 if __name__ == "__main__":
     import uvicorn
