@@ -3,12 +3,13 @@ from typing import Literal, Dict, Any
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ...core.exceptions import NotFoundError, BusinessLogicError
-from ...infrastructure.repositories.order_repository import OrderRepository
-from ...infrastructure.repositories.payment_repository import PaymentRepository
-from ...infrastructure.acquiring.fake_client import FakeAcquiringClient
-from ...db.models.order import OrderStatus
-from ...db.models.payment import PaymentStatus, PaymentType
+
+from src.core.exceptions import NotFoundError, BusinessLogicError
+from src.infrastructure.db.repositories.order_repository import OrderRepository
+from src.infrastructure.db.repositories.payment_repository import PaymentRepository
+from src.infrastructure.acquiring.fake_client import FakeAcquiringClient
+from src.infrastructure.db.models.order import OrderStatus
+from src.infrastructure.db.models.payment import PaymentStatus, PaymentType
 
 
 class PaymentService:
