@@ -1,0 +1,11 @@
+from abc import ABC, abstractmethod
+from typing import Generic, TypeVar
+
+from sqlalchemy.ext.asyncio import AsyncSession
+
+T = TypeVar("T")
+
+
+class BaseRepository(ABC, Generic[T]):
+    def __init__(self, session: AsyncSession):
+        self.session = session
