@@ -2,13 +2,10 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 
-# ────────────────────────────────────────────────
-# Добавляем эти импорты
 from src.infrastructure.db.session import engine, create_tables
 from src.api.v1.payments import router as payments_router
 from src.api.v1.orders import router as orders_router
 
-# ────────────────────────────────────────────────
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup
@@ -20,7 +17,6 @@ async def lifespan(app: FastAPI):
     await engine.dispose()
     print("→ Приложение остановлено")
 
-# ────────────────────────────────────────────────
 app = FastAPI(
     title="Payment Service",
     description="Тестовое задание — сервис платежей",
@@ -33,8 +29,6 @@ app = FastAPI(
 app.include_router(payments_router, prefix="/api/v1", tags=["payments"])
 app.include_router(orders_router, prefix="/api/v1")
 
-# ────────────────────────────────────────────────
-# остальной код без изменений
 @app.get("/")
 async def root():
     return {
@@ -47,7 +41,7 @@ async def root():
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(
-        "main:app",                 # ← здесь "main:app" — работает, если запускаешь из корня
+        "main:app",
         host="0.0.0.0",
         port=8000,
         reload=True,

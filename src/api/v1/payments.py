@@ -1,21 +1,14 @@
 # src/api/v1/payments.py
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.ext.asyncio import AsyncSession
 from pydantic import BaseModel, Field
 from decimal import Decimal
 from typing import Literal
 
 from src.core.exceptions import NotFoundError, BusinessLogicError
-from src.infrastructure.db.models.order import Order
 from src.services.payment_service import PaymentService
 from src.dependencies import get_payment_service     # если создал файл
-# или напрямую: from src.services.payment_service import PaymentService
-#               from src.infrastructure.acquiring.fake_client import FakeAcquiringClient
-#               from src.infrastructure.db.session import get_db
-
 
 router = APIRouter(prefix="/payments", tags=["payments"])
-
 
 
 class PaymentCreateRequest(BaseModel):

@@ -1,12 +1,9 @@
 from decimal import Decimal
 
 from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-#from src.ccore.exceptions import NotFoundError
 from src.core.exceptions import NotFoundError
-#from ...db.models.order import Order
 from src.infrastructure.db.models.order import Order
 from .base import BaseRepository
 

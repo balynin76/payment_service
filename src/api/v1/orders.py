@@ -16,7 +16,7 @@ router = APIRouter(prefix="/orders", tags=["orders (для тестирован�
     status_code=201
 )
 async def create_order(
-    amount: float = 1000.0,  # можно сделать через body, но для простоты query
+    amount: float = 1000.0,
     db: AsyncSession = Depends(get_db)
 ):
     """

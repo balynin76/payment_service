@@ -1,8 +1,6 @@
 from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-#from ...core.exceptions import NotFoundError
 from src.core.exceptions import NotFoundError
 from ...db.models.payment import Payment
 from .base import BaseRepository
