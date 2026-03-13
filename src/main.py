@@ -1,49 +1,41 @@
-from contextlib import asynccontextmanager
 from fastapi import FastAPI
-from fastapi.responses import JSONResponse
-
+from src.api.v1 import orders, payments
+from src.core.logger import get_logger, RequestLoggingMiddleware
 from src.infrastructure.db.session import engine, create_tables
-from src.api.v1.payments import router as payments_router
-from src.api.v1.orders import router as orders_router
+from contextlib import asynccontextmanager
+
+# Инициализируем логгер
+logger = get_logger()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Startup
-    print("→ Запуск приложения, создание таблиц...")
-    await create_tables()                    # ← здесь создаются таблицы
-    print("→ Таблицы готовы")
+    # Старт
+    logger.info("Starting payment service", extra={"event": "startup"})
+    await create_tables()
+    logger.info("Tables created successfully", extra={"event": "startup_complete"})
     yield
-    # Shutdown (можно добавить закрытие соединений, если нужно)
+    # Шатдаун
+    logger.info("Shutting down payment service", extra={"event": "shutdown"})
     await engine.dispose()
-    print("→ Приложение остановлено")
 
+# Создаем приложение
 app = FastAPI(
     title="Payment Service",
-    description="Тестовое задание — сервис платежей",
-    version="0.1.0",
-    docs_url="/docs",
-    redoc_url="/redoc",
-    lifespan=lifespan,          # ← добавляем lifespan
+    description="Сервис для обработки платежей",
+    version="1.0.0",
+    lifespan=lifespan
 )
 
-app.include_router(payments_router, prefix="/api/v1", tags=["payments"])
-app.include_router(orders_router, prefix="/api/v1")
+# Добавляем middleware для логирования
+app.add_middleware(RequestLoggingMiddleware)
 
-@app.get("/")
-async def root():
-    return {
-        "message": "Payment Service is running",
-        "docs": "/docs",
-        "status": "ok"
-    }
+# Подключаем роутеры
+app.include_router(orders.router, prefix="/api/v1")
+app.include_router(payments.router, prefix="/api/v1")
 
+@app.get("/health", tags=["health"])
+async def health_check():
+    logger.debug("Health check requested")
+    return {"status": "healthy", "service": "payment-service"}
 
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(
-        "main:app",
-        host="0.0.0.0",
-        port=8000,
-        reload=True,
-        log_level="info"
-    )
+logger.info("Application initialized", extra={"event": "app_ready"})
