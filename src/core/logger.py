@@ -12,7 +12,7 @@ class CustomJsonFormatter(jsonlogger.JsonFormatter):
         
         # Добавляем timestamp в ISO формате
         if not log_record.get('timestamp'):
-            log_record['timestamp'] = datetime.utcnow().isoformat()
+            log_record['timestamp'] = datetime.now(datetime.UTC).isoformat()
         
         # Добавляем название сервиса
         log_record['service'] = 'payment-service'

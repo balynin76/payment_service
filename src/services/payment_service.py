@@ -103,3 +103,12 @@ class PaymentService:
                 "order_id": order_id
             })
             return payment.id
+
+    @staticmethod
+    def _compute_order_status(order) -> OrderStatus:
+        """Вычисляет статус заказа на основе оплаченной суммы"""
+        if order.paid_amount >= order.amount:
+            return OrderStatus.PAID
+        if order.paid_amount > Decimal("0"):
+            return OrderStatus.PARTIALLY_PAID
+        return OrderStatus.PENDING
