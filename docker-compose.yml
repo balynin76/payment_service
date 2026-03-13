@@ -29,7 +29,7 @@ services:
     ports:
       - "8000:8000"
     environment:
-      DATABASE_URL: postgresql://payment_user:payment_password@db:5432/payment_db
+      DATABASE_URL: postgresql+asyncpg://payment_user:payment_password@db:5432/payment_db
     depends_on:
       db:
         condition: service_healthy

@@ -1,50 +1,41 @@
-from sqlalchemy import create_engine
-from sqlalchemy.ext.asyncio import (
-    AsyncEngine,
-    AsyncSession,  # ← это обязательно добавить
-    async_sessionmaker,
-    create_async_engine,
-)
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, AsyncEngine
+from sqlalchemy.orm import declarative_base, sessionmaker
+from sqlalchemy import MetaData
+from src.core.config import settings
 
-from ...core.config import settings
+# Базовый класс для моделей
+Base = declarative_base()
 
+# Метаданные
+metadata = MetaData()
+
+# АСИНХРОННЫЙ движок (важно: URL должен быть с +asyncpg)
 engine: AsyncEngine = create_async_engine(
-    settings.DATABASE_URL,
-    echo=False,
-    future=True,
+    settings.DATABASE_URL,  # Убедитесь, что в URL есть +asyncpg
+    echo=True,
 )
 
-AsyncSessionLocal = async_sessionmaker(
+# Асинхронная фабрика сессий
+AsyncSessionLocal = sessionmaker(
     engine,
-    class_=AsyncSession,  # ← теперь это определено
-    expire_on_commit=False,
+    class_=AsyncSession,
+    expire_on_commit=False
 )
 
-if settings.DATABASE_URL.startswith("postgresql"):
-    engine = create_engine(
-        settings.DATABASE_URL,
-        pool_size=20,
-        max_overflow=0
-    )
-else:
-    # SQLite configuration
-    engine = create_engine(
-        settings.DATABASE_URL,
-        connect_args={"check_same_thread": False}
-    )
-
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 async def get_db():
+    """Зависимость для получения сессии БД"""
     async with AsyncSessionLocal() as session:
         yield session
 
 
 async def create_tables():
-    from src.infrastructure.db.models import Base  # ← абсолютный импорт от корня src
+    """Создание таблиц в базе данных"""
+    print("→ Создание таблиц...")
 
+    # ПРАВИЛЬНЫЙ АСИНХРОННЫЙ КОД:
     async with engine.begin() as conn:
+        # Для создания таблиц используем run_sync
         await conn.run_sync(Base.metadata.create_all)
 
-    print("Таблицы созданы (или уже существовали)")
+    print("→ Таблицы созданы")
