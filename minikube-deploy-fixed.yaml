@@ -1,0 +1,80 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: payment-service
+  labels:
+    app: payment-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: payment-service
+  template:
+    metadata:
+      labels:
+        app: payment-service
+    spec:
+      # Добавляем initContainer для создания таблиц
+      initContainers:
+      - name: init-db
+        image: payment-service:latest
+        imagePullPolicy: Never
+        command: ["python", "-c"]
+        args:
+          - |
+            from src.infrastructure.db.session import create_tables
+            import asyncio
+            asyncio.run(create_tables())
+            print("✅ Tables created successfully!")
+        env:
+        - name: DATABASE_URL
+          value: "sqlite+aiosqlite:///./data/payments.db"
+        volumeMounts:
+        - name: data
+          mountPath: /app/data
+      
+      # Основной контейнер
+      containers:
+      - name: app
+        image: payment-service:latest
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 8000
+        env:
+        - name: DATABASE_URL
+          value: "sqlite+aiosqlite:///./data/payments.db"
+        - name: LOG_LEVEL
+          value: "DEBUG"
+        volumeMounts:
+        - name: data
+          mountPath: /app/data
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 5
+          periodSeconds: 5
+      
+      # Volume для SQLite
+      volumes:
+      - name: data
+        emptyDir: {}
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: payment-service
+spec:
+  selector:
+    app: payment-service
+  ports:
+  - port: 8000
+    targetPort: 8000
+  type: ClusterIP
