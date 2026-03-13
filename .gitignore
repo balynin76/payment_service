@@ -1,4 +1,5 @@
 # PyCharm / IntelliJ
 .idea/
 *.iml
-.idea/  # на всякий случай два раза
+.idea/  # на всякий случай два разаminikube-linux-amd64
+minikube-*
