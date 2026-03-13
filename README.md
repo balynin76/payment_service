@@ -8,27 +8,9 @@
 [![Tests](https://img.shields.io/badge/tests-11%20passed-brightgreen.svg)](https://github.com/balynin76/payment_service/actions)
 [![Coverage](https://img.shields.io/badge/coverage-73%25-yellow.svg)](https://codecov.io/gh/balynin76/payment_service)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
 
 **Production-ready платежный сервис на FastAPI** с асинхронной архитектурой, структурированным логированием, полным покрытием тестами и готовностью к деплою в Kubernetes.
-
----
-
-## 📋 Содержание
-- [Возможности](#-возможности)
-- [Технологии](#-технологии)
-- [Быстрый старт](#-быстрый-старт)
-- [Запуск в Docker](#-запуск-в-docker)
-- [Запуск в Kubernetes](#-запуск-в-kubernetes-minikube)
-- [API Примеры](#-api-примеры)
-- [Тестирование](#-тестирование)
-- [Логирование](#-логирование)
-- [Структура проекта](#-структура-проекта)
-- [CI/CD](#-cicd)
-- [Устранение неполадок](#-устранение-неполадок)
-- [Лицензия](#-лицензия)
-
----
 
 ## ✨ Возможности
 
@@ -94,3 +76,29 @@ uvicorn src.main:app --reload
 # 6. Проверка
 curl http://localhost:8000/health
 # {"status":"healthy","service":"payment-service"}
+
+🐳 Запуск в Docker
+
+# Сборка образа
+docker build -t payment-service:latest .
+
+# Запуск контейнера
+docker run -p 8000:8000 payment-service:latest
+
+# Или через docker-compose
+docker-compose up --build
+
+☸️ Запуск в Kubernetes (Minikube)
+
+docker build -t payment-service:latest .
+minikube image load payment-service:latest
+minikube image ls | grep payment
+
+kubectl apply -f minikube-deploy-fixed.yaml
+kubectl get pods -w
+
+# В отдельном терминале
+kubectl port-forward service/payment-service 8000:8000
+
+curl http://localhost:8000/health
+
