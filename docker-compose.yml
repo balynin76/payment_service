@@ -34,5 +34,18 @@ services:
       db:
         condition: service_healthy
 
+  test:
+    build: .
+    container_name: payment_test
+    command: >
+      sh -c "pytest tests/ -v --cov=src --cov-report=term --cov-report=html"
+    volumes:
+      - .:/app
+      - ./htmlcov:/app/htmlcov
+    environment:
+      DATABASE_URL: sqlite+aiosqlite:///./test.db
+    depends_on:
+      - db
+
 volumes:
   postgres_data:

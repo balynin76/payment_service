@@ -15,6 +15,7 @@ router = APIRouter(prefix="/orders", tags=["orders (для тестирован�
     response_model=dict,
     status_code=201
 )
+
 async def create_order(
     amount: float = 1000.0,
     db: AsyncSession = Depends(get_db)
@@ -32,14 +33,13 @@ async def create_order(
         return {
             "order_id": order.id,
             "amount": str(order.amount),
-            "status": order.status.value,
+            "status": str(order.status),  # Исправлено! Явное преобразование в строку
             "created_at": order.created_at.isoformat() if order.created_at else None
         }
 
     except Exception as e:
         await db.rollback()
         raise HTTPException(status_code=500, detail=f"Ошибка создания заказа: {str(e)}")
-
 
 @router.get("/{order_id}", summary="Получить информацию о заказе")
 async def get_order(
@@ -57,6 +57,6 @@ async def get_order(
         "order_id": order.id,
         "amount": str(order.amount),
         "paid_amount": str(order.paid_amount),
-        "status": order.status.value,
+        "status": str(order.status),
         "created_at": order.created_at.isoformat() if order.created_at else None
     }
