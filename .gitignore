@@ -3,3 +3,19 @@
 *.iml
 .idea/  # на всякий случай два разаminikube-linux-amd64
 minikube-*
+# Environment variables
+.env
+.env.*
+!.env.example
+!.env.test
+!.env.local.example
+
+# Environment directories
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+echo ".env" >> .gitignore
+echo ".env.*" >> .gitignore
+echo "!.env.example" >> .gitignore
